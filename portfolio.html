@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GREAT Portfolio Gallery</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <style>
+      :root {
+        --bg: #071018;
+        --surface: #0f1720;
+        --surface-strong: #121b24;
+        --text: #e9f3f9;
+        --muted: #96a6b5;
+        --accent: #7be6b5;
+        --border: rgba(255, 255, 255, 0.08);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100%;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top left, rgba(123,230,181,0.1), transparent 32%), linear-gradient(180deg, #071018 0%, #04080f 100%);
+        color: var(--text);
+      }
+      a { color: inherit; text-decoration: none; }
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 5%;
+      }
+      .page-header .brand { font-weight: 800; letter-spacing: 0.18em; }
+      .page-header nav a { color: var(--muted); margin-left: 26px; font-size: 14px; }
+      .hero {
+        padding: 0 5% 24px;
+      }
+      .hero-title { margin: 0; font-size: clamp(2rem, 4vw, 3.6rem); }
+      .hero-copy { margin: 14px 0 0; color: var(--muted); max-width: 720px; }
+      .hero-sub { display: inline-flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+      .hero-chip { padding: 10px 14px; border-radius: 999px; background: rgba(123,230,181,0.12); color: var(--accent); font-size: 0.9rem; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0,1fr));
+        gap: 18px;
+        padding: 18px 5% 40px;
+      }
+      .album-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .album-card:hover { transform: translateY(-4px); box-shadow: 0 22px 54px rgba(0,0,0,0.25); }
+      .album-card img { width: 100%; display: block; height: 220px; object-fit: cover; }
+      .album-info { padding: 18px 16px 20px; }
+      .album-title { margin: 0; font-size: 1.05rem; }
+      .album-subtitle { margin: 8px 0 0; color: var(--muted); font-size: 0.94rem; line-height: 1.5; }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.74);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        z-index: 30;
+      }
+      .overlay.open { visibility: visible; opacity: 1; }
+      .modal {
+        width: min(960px, 100%);
+        max-height: 90vh;
+        border-radius: 24px;
+        background: #0b1722;
+        border: 1px solid rgba(255,255,255,0.08);
+        overflow: hidden;
+        transform: scale(0.96);
+        opacity: 0;
+        transition: transform 0.22s ease, opacity 0.2s ease;
+      }
+      .overlay.open .modal { transform: scale(1); opacity: 1; }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 22px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+      .modal-header h2 { margin: 0; font-size: 1.2rem; }
+      .modal-header small { color: var(--muted); }
+      .modal-close {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255,255,255,0.05);
+        color: var(--text);
+        font-size: 18px;
+        cursor: pointer;
+      }
+      .modal-body { display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 20px; }
+      .modal-image { border-radius: 18px; overflow: hidden; }
+      .modal-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .modal-details { color: var(--muted); }
+      .modal-details h3 { margin: 0 0 12px; font-size: 1.1rem; color: var(--text); }
+      .modal-details p { margin: 0 0 20px; line-height: 1.7; }
+      .detail-chip { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+      .detail-chip span { padding: 10px 12px; border-radius: 999px; background: rgba(123,230,181,0.12); color: var(--accent); font-size: 0.9rem; }
+      footer { padding: 20px 5%; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+      footer .links a { margin-right: 18px; color: var(--muted); font-size: 14px; }
+      footer .credit { color: var(--muted); font-size: 14px; }
+      @media (max-width: 1080px) { .grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+      @media (max-width: 720px) { .hero { padding: 0 5% 16px; } .modal-body { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr; } .page-header { flex-direction: column; align-items: flex-start; } }
+    </style>
+  </head>
+  <body>
+    <header class="page-header">
+      <div class="brand">GREAT Portfolio</div>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="portfolio.html">Portfolio</a>
+      </nav>
+    </header>
+    <section class="hero">
+      <h1 class="hero-title">Album Gallery</h1>
+      <p class="hero-copy">Browse the full portfolio album collection. Click any work to open the detail popup with title, caption and used tools.</p>
+      <div class="hero-sub">
+        <span class="hero-chip">32 Albums</span>
+        <span class="hero-chip">Dark aesthetic</span>
+        <span class="hero-chip">Smooth popup</span>
+      </div>
+    </section>
+    <main class="grid" id="album-grid">
+      <!-- 32 album cards -->
+      <div class="album-card" data-title="Brand System 01" data-subtitle="Minimal identity for a fashion label." data-tools="Illustrator, Figma" data-img="https://picsum.photos/seed/album1/640/540">
+        <img src="https://picsum.photos/seed/album1/640/540" alt="Brand System 01" />
+        <div class="album-info">
+          <h3 class="album-title">Brand System 01</h3>
+          <p class="album-subtitle">Minimal identity for a fashion label.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Campaign Art 02" data-subtitle="Bold campaign visuals for launch." data-tools="Photoshop, After Effects" data-img="https://picsum.photos/seed/album2/640/540">
+        <img src="https://picsum.photos/seed/album2/640/540" alt="Campaign Art 02" />
+        <div class="album-info">
+          <h3 class="album-title">Campaign Art 02</h3>
+          <p class="album-subtitle">Bold campaign visuals for launch.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Illustration 03" data-subtitle="Editorial illustration set for a magazine." data-tools="Procreate, Photoshop" data-img="https://picsum.photos/seed/album3/640/540">
+        <img src="https://picsum.photos/seed/album3/640/540" alt="Illustration 03" />
+        <div class="album-info">
+          <h3 class="album-title">Illustration 03</h3>
+          <p class="album-subtitle">Editorial illustration set for a magazine.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Social Set 04" data-subtitle="Social media layout for storytelling." data-tools="Figma, Photoshop" data-img="https://picsum.photos/seed/album4/640/540">
+        <img src="https://picsum.photos/seed/album4/640/540" alt="Social Set 04" />
+        <div class="album-info">
+          <h3 class="album-title">Social Set 04</h3>
+          <p class="album-subtitle">Social media layout for storytelling.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Packaging 05" data-subtitle="Premium packaging concept design." data-tools="Illustrator" data-img="https://picsum.photos/seed/album5/640/540">
+        <img src="https://picsum.photos/seed/album5/640/540" alt="Packaging 05" />
+        <div class="album-info">
+          <h3 class="album-title">Packaging 05</h3>
+          <p class="album-subtitle">Premium packaging concept design.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="3D Mockup 06" data-subtitle="Product visual with 3D styling." data-tools="Blender, Photoshop" data-img="https://picsum.photos/seed/album6/640/540">
+        <img src="https://picsum.photos/seed/album6/640/540" alt="3D Mockup 06" />
+        <div class="album-info">
+          <h3 class="album-title">3D Mockup 06</h3>
+          <p class="album-subtitle">Product visual with 3D styling.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Poster 07" data-subtitle="Eye-catching event poster layout." data-tools="Illustrator, Photoshop" data-img="https://picsum.photos/seed/album7/640/540">
+        <img src="https://picsum.photos/seed/album7/640/540" alt="Poster 07" />
+        <div class="album-info">
+          <h3 class="album-title">Poster 07</h3>
+          <p class="album-subtitle">Eye-catching event poster layout.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Identity 08" data-subtitle="Logo and brand elements exploration." data-tools="Figma, Illustrator" data-img="https://picsum.photos/seed/album8/640/540">
+        <img src="https://picsum.photos/seed/album8/640/540" alt="Identity 08" />
+        <div class="album-info">
+          <h3 class="album-title">Identity 08</h3>
+          <p class="album-subtitle">Logo and brand elements exploration.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Texture 09" data-subtitle="Visual texture studies for editorial." data-tools="Photoshop" data-img="https://picsum.photos/seed/album9/640/540">
+        <img src="https://picsum.photos/seed/album9/640/540" alt="Texture 09" />
+        <div class="album-info">
+          <h3 class="album-title">Texture 09</h3>
+          <p class="album-subtitle">Visual texture studies for editorial.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Ad Creative 10" data-subtitle="Performance-focused digital ad visuals." data-tools="Photoshop, Figma" data-img="https://picsum.photos/seed/album10/640/540">
+        <img src="https://picsum.photos/seed/album10/640/540" alt="Ad Creative 10" />
+        <div class="album-info">
+          <h3 class="album-title">Ad Creative 10</h3>
+          <p class="album-subtitle">Performance-focused digital ad visuals.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Editorial 11" data-subtitle="Magazine layout with bold typography." data-tools="InDesign, Illustrator" data-img="https://picsum.photos/seed/album11/640/540">
+        <img src="https://picsum.photos/seed/album11/640/540" alt="Editorial 11" />
+        <div class="album-info">
+          <h3 class="album-title">Editorial 11</h3>
+          <p class="album-subtitle">Magazine layout with bold typography.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Event 12" data-subtitle="Social teaser for an event campaign." data-tools="Figma, Photoshop" data-img="https://picsum.photos/seed/album12/640/540">
+        <img src="https://picsum.photos/seed/album12/640/540" alt="Event 12" />
+        <div class="album-info">
+          <h3 class="album-title">Event 12</h3>
+          <p class="album-subtitle">Social teaser for an event campaign.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Editorial 13" data-subtitle="Art directed editorial cover design." data-tools="Photoshop, Illustrator" data-img="https://picsum.photos/seed/album13/640/540">
+        <img src="https://picsum.photos/seed/album13/640/540" alt="Editorial 13" />
+        <div class="album-info">
+          <h3 class="album-title">Editorial 13</h3>
+          <p class="album-subtitle">Art directed editorial cover design.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Pattern 14" data-subtitle="Repeat pattern set for branding." data-tools="Illustrator" data-img="https://picsum.photos/seed/album14/640/540">
+        <img src="https://picsum.photos/seed/album14/640/540" alt="Pattern 14" />
+        <div class="album-info">
+          <h3 class="album-title">Pattern 14</h3>
+          <p class="album-subtitle">Repeat pattern set for branding.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Motion Story 15" data-subtitle="Motion storyboard for campaign." data-tools="After Effects" data-img="https://picsum.photos/seed/album15/640/540">
+        <img src="https://picsum.photos/seed/album15/640/540" alt="Motion Story 15" />
+        <div class="album-info">
+          <h3 class="album-title">Motion Story 15</h3>
+          <p class="album-subtitle">Motion storyboard for campaign.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Product 16" data-subtitle="Visual direction for new product release." data-tools="Figma, Blender" data-img="https://picsum.photos/seed/album16/640/540">
+        <img src="https://picsum.photos/seed/album16/640/540" alt="Product 16" />
+        <div class="album-info">
+          <h3 class="album-title">Product 16</h3>
+          <p class="album-subtitle">Visual direction for new product release.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Concept 17" data-subtitle="Creative concept package for brand identity." data-tools="Illustrator, Figma" data-img="https://picsum.photos/seed/album17/640/540">
+        <img src="https://picsum.photos/seed/album17/640/540" alt="Concept 17" />
+        <div class="album-info">
+          <h3 class="album-title">Concept 17</h3>
+          <p class="album-subtitle">Creative concept package for brand identity.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Promo 18" data-subtitle="Promotional assets for a new collection." data-tools="Photoshop" data-img="https://picsum.photos/seed/album18/640/540">
+        <img src="https://picsum.photos/seed/album18/640/540" alt="Promo 18" />
+        <div class="album-info">
+          <h3 class="album-title">Promo 18</h3>
+          <p class="album-subtitle">Promotional assets for a new collection.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Brand 19" data-subtitle="Corporate identity refresh study." data-tools="Illustrator, Figma" data-img="https://picsum.photos/seed/album19/640/540">
+        <img src="https://picsum.photos/seed/album19/640/540" alt="Brand 19" />
+        <div class="album-info">
+          <h3 class="album-title">Brand 19</h3>
+          <p class="album-subtitle">Corporate identity refresh study.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Social 20" data-subtitle="Engaging carousel for social feeds." data-tools="Canva, Photoshop" data-img="https://picsum.photos/seed/album20/640/540">
+        <img src="https://picsum.photos/seed/album20/640/540" alt="Social 20" />
+        <div class="album-info">
+          <h3 class="album-title">Social 20</h3>
+          <p class="album-subtitle">Engaging carousel for social feeds.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Poster 21" data-subtitle="Bold visual for outdoor advertising." data-tools="Illustrator" data-img="https://picsum.photos/seed/album21/640/540">
+        <img src="https://picsum.photos/seed/album21/640/540" alt="Poster 21" />
+        <div class="album-info">
+          <h3 class="album-title">Poster 21</h3>
+          <p class="album-subtitle">Bold visual for outdoor advertising.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Collateral 22" data-subtitle="Print collateral design package." data-tools="InDesign, Illustrator" data-img="https://picsum.photos/seed/album22/640/540">
+        <img src="https://picsum.photos/seed/album22/640/540" alt="Collateral 22" />
+        <div class="album-info">
+          <h3 class="album-title">Collateral 22</h3>
+          <p class="album-subtitle">Print collateral design package.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Moodboard 23" data-subtitle="Creative moodboard for brand visuals." data-tools="Figma" data-img="https://picsum.photos/seed/album23/640/540">
+        <img src="https://picsum.photos/seed/album23/640/540" alt="Moodboard 23" />
+        <div class="album-info">
+          <h3 class="album-title">Moodboard 23</h3>
+          <p class="album-subtitle">Creative moodboard for brand visuals.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Visual 24" data-subtitle="Digital asset set for launch campaign." data-tools="Photoshop, Figma" data-img="https://picsum.photos/seed/album24/640/540">
+        <img src="https://picsum.photos/seed/album24/640/540" alt="Visual 24" />
+        <div class="album-info">
+          <h3 class="album-title">Visual 24</h3>
+          <p class="album-subtitle">Digital asset set for launch campaign.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Identity 25" data-subtitle="Brand toolkit for a culture project." data-tools="Figma, Illustrator" data-img="https://picsum.photos/seed/album25/640/540">
+        <img src="https://picsum.photos/seed/album25/640/540" alt="Identity 25" />
+        <div class="album-info">
+          <h3 class="album-title">Identity 25</h3>
+          <p class="album-subtitle">Brand toolkit for a culture project.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Scene 26" data-subtitle="Scene concept for social content." data-tools="Procreate" data-img="https://picsum.photos/seed/album26/640/540">
+        <img src="https://picsum.photos/seed/album26/640/540" alt="Scene 26" />
+        <div class="album-info">
+          <h3 class="album-title">Scene 26</h3>
+          <p class="album-subtitle">Scene concept for social content.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Poster 27" data-subtitle="Concert poster with expressive color." data-tools="Illustrator, Photoshop" data-img="https://picsum.photos/seed/album27/640/540">
+        <img src="https://picsum.photos/seed/album27/640/540" alt="Poster 27" />
+        <div class="album-info">
+          <h3 class="album-title">Poster 27</h3>
+          <p class="album-subtitle">Concert poster with expressive color.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Logo 28" data-subtitle="Icon set and logotype system." data-tools="Illustrator" data-img="https://picsum.photos/seed/album28/640/540">
+        <img src="https://picsum.photos/seed/album28/640/540" alt="Logo 28" />
+        <div class="album-info">
+          <h3 class="album-title">Logo 28</h3>
+          <p class="album-subtitle">Icon set and logotype system.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Campaign 29" data-subtitle="Creative campaign visuals for brand." data-tools="Photoshop" data-img="https://picsum.photos/seed/album29/640/540">
+        <img src="https://picsum.photos/seed/album29/640/540" alt="Campaign 29" />
+        <div class="album-info">
+          <h3 class="album-title">Campaign 29</h3>
+          <p class="album-subtitle">Creative campaign visuals for brand.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Mockup 30" data-subtitle="Brand presentation mockup pack." data-tools="Figma, Photoshop" data-img="https://picsum.photos/seed/album30/640/540">
+        <img src="https://picsum.photos/seed/album30/640/540" alt="Mockup 30" />
+        <div class="album-info">
+          <h3 class="album-title">Mockup 30</h3>
+          <p class="album-subtitle">Brand presentation mockup pack.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Visual 31" data-subtitle="Advertising concept with motion focus." data-tools="After Effects" data-img="https://picsum.photos/seed/album31/640/540">
+        <img src="https://picsum.photos/seed/album31/640/540" alt="Visual 31" />
+        <div class="album-info">
+          <h3 class="album-title">Visual 31</h3>
+          <p class="album-subtitle">Advertising concept with motion focus.</p>
+        </div>
+      </div>
+      <div class="album-card" data-title="Brand 32" data-subtitle="Complete brand launch package." data-tools="Illustrator, Figma" data-img="https://picsum.photos/seed/album32/640/540">
+        <img src="https://picsum.photos/seed/album32/640/540" alt="Brand 32" />
+        <div class="album-info">
+          <h3 class="album-title">Brand 32</h3>
+          <p class="album-subtitle">Complete brand launch package.</p>
+        </div>
+      </div>
+    </main>
+    <div class="overlay" id="overlay" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <div>
+            <h2 id="modal-title">Title</h2>
+            <small id="modal-subtitle">Subtitle caption</small>
+          </div>
+          <button class="modal-close" id="modal-close" aria-label="Close popup">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-image"><img id="modal-img" src="" alt="Album preview" /></div>
+          <div class="modal-details">
+            <h3>About this album</h3>
+            <p id="modal-description">Select an album card to view the title, subtitle and toolset used for the project.</p>
+            <div class="detail-chip" id="modal-tools"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="links">
+        <a href="#">Behance</a>
+        <a href="#">Instagram</a>
+        <a href="#">Facebook</a>
+        <a href="#">LinkedIn</a>
+      </div>
+      <div class="credit">Designed & Created by GREAT</div>
+    </footer>
+    <script>
+      const overlay = document.getElementById('overlay');
+      const modalTitle = document.getElementById('modal-title');
+      const modalSubtitle = document.getElementById('modal-subtitle');
+      const modalImg = document.getElementById('modal-img');
+      const modalTools = document.getElementById('modal-tools');
+      const modalClose = document.getElementById('modal-close');
+
+      function openPopup(card) {
+        modalTitle.textContent = card.dataset.title;
+        modalSubtitle.textContent = card.dataset.subtitle;
+        modalImg.src = card.dataset.img;
+        modalImg.alt = card.dataset.title;
+        modalTools.innerHTML = '';
+        card.dataset.tools.split(',').map(tool => tool.trim()).filter(Boolean).forEach(tool => {
+          const chip = document.createElement('span');
+          chip.textContent = tool;
+          modalTools.appendChild(chip);
+        });
+        overlay.classList.add('open');
+        overlay.setAttribute('aria-hidden', 'false');
+      }
+
+      function closePopup() {
+        overlay.classList.remove('open');
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+
+      document.querySelectorAll('.album-card').forEach(card => {
+        card.addEventListener('click', () => openPopup(card));
+      });
+      modalClose.addEventListener('click', closePopup);
+      overlay.addEventListener('click', event => {
+        if (event.target === overlay) closePopup();
+      });
+      window.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closePopup();
+      });
+    </script>
+  </body>
+</html>
